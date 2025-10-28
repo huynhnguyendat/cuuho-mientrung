@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cứu Hộ Miền Trung</title>
+
+  <!-- Thư viện bản đồ miễn phí Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    header {
+      background: #0077b6;
+      color: #fff;
+      text-align: center;
+      padding: 12px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #map {
+      height: 70vh;
+      width: 100%;
+    }
+    .form-container {
+      text-align: center;
+      padding: 10px;
+      background: #fff;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background: #0077b6;
+      border: none;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005f87;
+    }
+    #status {
+      color: #222;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>🆘 CỨU HỘ MIỀN TRUNG</header>
+
+  <div id="map"></div>
+
+  <div class="form-container">
+    <h3>Đăng ký / Đăng nhập</h3>
+    <input type="email" id="email" placeholder="Nhập email" />
+    <input type="password" id="password" placeholder="Nhập mật khẩu" />
+    <br />
+    <button id="signup">Đăng ký</button>
+    <button id="login">Đăng nhập</button>
+    <p id="status"></p>
+  </div>
+
+  <!-- Firebase và logic xử lý -->
+  <script type="module">
+ <!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cứu Hộ Miền Trung — Cập nhật tình hình</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{
+      --blue:#0b74de;--danger:#d32f2f;--orange:#f97316;--yellow:#f59e0b;--green:#16a34a;
+      --card:#fff;--muted:#5b6b72;
+    }
+    body{font-family:Arial,Helvetica,sans-serif;background:#eef6fb;margin:0;color:#06202a}
+    header{background:linear-gradient(90deg,#084b58,#0b7a8b);color:white;padding:18px;text-align:center;font-size:20px}
+    .wrap{max-width:1000px;margin:18px auto;padding:12px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+    @media (max-width:960px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border-radius:10px;padding:12px;box-shadow:0 6px 20px rgba(6,32,38,0.06)}
+    .small{font-size:13px;color:var(--muted)}
+    #map{height:300px;border-radius:8px;overflow:hidden;background:#dff3fa;display:flex;align-items:center;justify-content:center}
+    input,select,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #d1e9f0}
+    button{padding:10px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn-primary{background:var(--blue);color:white}
+    .btn-danger{background:var(--danger);color:white}
+    .post{border-left:6px solid #eee;padding:10px;margin-bottom:10px;border-radius:6px;background:#fbffff}
+    .badge{display:inline-block;padding:6px 8px;border-radius:6px;color:white;font-weight:600}
+    .badge.red{background:var(--danger)} .badge.orange{background:var(--orange)} .badge.yellow{background:var(--yellow)} .badge.green{background:var(--green)}
+    .admin-actions{margin-top:8px}
+    .media{max-width:100%;border-radius:6px;margin-top:8px}
+    .info-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <header>🌊 CỨU HỘ MIỀN TRUNG — Cập nhật & Cứu hộ</header>
+
+  <div class="wrap">
+    <div class="grid">
+      <!-- LEFT: main -->
+      <div>
+        <div class="card">
+          <h3>📍 Bản đồ (demo)</h3>
+          <div id="map">Bản đồ sẽ hiển thị ở đây</div>
+          <p class="small">Bản đồ dùng OpenStreetMap (Leaflet). Sau này có thể hiển thị marker các bài đăng lên map.</p>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>📣 Bảng tin cộng đồng (công khai)</h3>
+          <div id="postsList" class="small"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: auth + post form -->
+      <aside>
+        <div class="card">
+          <h4>🔐 Đăng ký / Đăng nhập</h4>
+          <div id="authArea">
+            <input id="email" type="email" placeholder="Email" />
+            <input id="password" type="password" placeholder="Mật khẩu (>=6 ký tự)" />
+            <div style="display:flex;gap:8px;justify-content:space-between;margin-top:6px">
+              <button class="btn-primary" id="btnRegister">Đăng ký</button>
+              <button class="btn-primary" id="btnLogin">Đăng nhập</button>
+            </div>
+            <p id="authStatus" class="small"></p>
+          </div>
+
+          <div id="userArea" style="display:none;margin-top:10px;">
+            <p class="small">Đã đăng nhập: <b id="userEmail"></b></p>
+            <button id="btnLogout" style="background:#8b5cf6;color:white">Đăng xuất</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h4>📝 Đăng thông tin (cần đăng nhập)</h4>
+          <div id="postForm" style="display:none">
+            <input id="title" placeholder="Tiêu đề (ví dụ: Cầu Tam Kỳ ngập 0.7m)" />
+            <textarea id="desc" rows="3" placeholder="Mô tả ngắn..."></textarea>
+
+            <label class="small">Chọn media (1 ảnh hoặc 1 video)</label>
+            <input id="mediaFile" type="file" accept="image/*,video/*" />
+
+            <label class="small">Mức độ lụt</label>
+            <select id="level">
+              <option value="green">Xanh (An toàn)</option>
+              <option value="yellow">Vàng (Cảnh báo)</option>
+              <option value="orange">Cam (Ngập sâu)</option>
+              <option value="red">Đỏ (Nguy cấp)</option>
+            </select>
+
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button id="btnPost" class="btn-primary">Đăng thông tin</button>
+              <button id="btnClear" type="button">Xóa form</button>
+            </div>
+            <p id="postStatus" class="small"></p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h4>📋 Ghi chú</h4>
+          <p class="small">Bài viết công khai — mọi người xem được. Admin có thể xóa bài khi cần. Media tối đa ~50MB (storage rule mặc định).</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  
+0:12 / 0:19
+Facebook
+Facebook
+Facebook
+Facebook
+Facebook
+Facebook
+Facebook
+Facebook
+Facebook
+Facebook
+Facebook
+Lời mời kết bạn
+Người liên hệ
+Đoạn chat cộng đồng
+Nhóm chat
+16:31
+Ngọc
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cứu Hộ Miền Trung — Bản đồ hỗ trợ cứu hộ</title>
+
+  <!-- Thư viện bản đồ miễn phí OpenStreetMap qua Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0; padding: 0;
+      background: #f4f4f4;
+    }
+    header {
+      background: #0077b6;
+      color: #fff;
+      text-align: center;
+      padding: 12px 0;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #map {
+      height: 70vh;
+      width: 100%;
+    }
+    .btn-container {
+      text-align: center;
+      margin: 10px;
+    }
+    button {
+      background: #e63946;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #d62828;
+    }
+    .auth-box {
+      text-align: center;
+      margin: 20px auto;
+      background: #fff;
+      width: 300px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    input {
+      width: 90%;
+      padding: 8px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #status {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>🆘 CỨU HỘ MIỀN TRUNG — BẢN ĐỒ HỖ TRỢ KHẨN CẤP</header>
+
+  <div id="map"></div>
+  <div class="btn-container">
+    <button onclick="sendSOS()">🚨 Gửi tín hiệu SOS</button>
+  </div>
+
+  <!-- Khung đăng nhập -->
+  <div class="auth-box">
+    <h2>Đăng nhập hoặc đăng ký</h2>
+    <input type="email" id="email" placeholder="Nhập email">
+    <input type="password" id="password" placeholder="Nhập mật khẩu">
+    <br>
+    <button id="signup">Đăng ký</button>
+    <button id="login">Đăng nhập</button>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    // ========== BẢN ĐỒ LEAFLET ==========
+    var map = L.map('map').setView([15.573, 108.474], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    map.locate({setView: true, maxZoom: 15});
+    map.on('locationfound', function(e) {
+      var radius = e.accuracy / 2;
+      L.marker(e.latlng).addTo(map).bindPopup("📍 Vị trí của bạn").openPopup();
+      L.circle(e.latlng, radius).addTo(map);
+    });
+    map.on('locationerror', function() {
+      alert("Không lấy được vị trí GPS — vui lòng bật định vị!");
+    });
+
+    function sendSOS() {
+      alert("🚨 Tín hiệu SOS đã được gửi!\nĐội cứu hộ sẽ nhận vị trí của bạn.");
+    }
+  </script>
+
+  <!-- ========== FIREBASE AUTH ========= -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6DNuThRLY6NsSqlhX71j5zHKhu6e-K_E",
+      authDomain: "cuuho-mientrung.firebaseapp.com",
+      projectId: "cuuho-mientrung",
+      storageBucket: "cuuho-mientrung.firebasestorage.app",
+      messagingSenderId: "54443732617",
+      appId: "1:54443732617:web:e86f1bc8aea31e64a96058",
+      measurementId: "G-4HRL9C2WX8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const signupBtn = document.getElementById("signup");
+    const loginBtn = document.getElementById("login");
+    const status = document.getElementById("status");
+
+    signupBtn.addEventListener("click", async () => {
+      try {
+        await createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        status.textContent = "✅ Đăng ký thành công!";
+      } catch (err) {
+        status.textContent = "⚠️ Lỗi đăng ký: " + err.message;
+      }
+    });
+
+    loginBtn.addEventListener("click", async () => {
+      try {
+        await signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value);
+        status.textContent = "✅ Đăng nhập thành công!";
+      } catch (err) {
+        status.textContent = "⚠️ Lỗi đăng nhập: " + err.message;
+      }
+    });
+  </script>
+
+</body>
+</html>
+Ngọc
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cứu hộ Miền Trung</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f2f2f2; }
+    h1 { color: #333; text-align: center; }
+    .form-box { background: #fff; padding: 20px; border-radius: 8px; margin: 20px auto; width: 100%; max-width: 400px; }
+    input, button, textarea { width: 100%; padding: 10px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc; }
+    button { background: #007bff; color: white; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    #posts { margin-top: 30px; }
+    .post { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <h1>CỨU HỘ MIỀN TRUNG</h1>
+
+  <div class="form-box" id="login-box">
+    <h3>Đăng nhập / Đăng ký</h3>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Mật khẩu">
+    <button onclick="login()">Đăng nhập</button>
+    <button onclick="register()">Đăng ký</button>
+  </div>
+
+  <div class="form-box" id="post-box" style="display:none;">
+    <h3>Xin chào <span id="user-email"></span></h3>
+    <textarea id="content" placeholder="Nhập nội dung cập nhật..."></textarea>
+    <button onclick="postMessage()">Đăng thông tin</button>
+    <button onclick="logout()">Đăng xuất</button>
+  </div>
+
+  <div id="posts"></div>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6DNuThRLY6NsSqlhX71j5zHKhu6e-K_E",
+      authDomain: "cuuho-mientrung.firebaseapp.com",
+      projectId: "cuuho-mientrung",
+      storageBucket: "cuuho-mientrung.firebasestorage.app",
+      messagingSenderId: "54443732617",
+      appId: "1:54443732617:web:e86f1bc8aea31e64a96058",
+      measurementId: "G-4HRL9C2WX8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Email admin cố định
+    const ADMIN_EMAIL = "admin@gmail.com";
+
+    // Đăng ký
+    async function register() {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        alert("Đăng ký thành công!");
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    // Đăng nhập
+    async function login() {
+      const email = emailInput.value;
+      const password = passwordInput.value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Đăng nhập thành công!");
+      } catch (e) {
+        alert("Sai tài khoản hoặc mật khẩu!");
+      }
+    }
+
+    // Đăng xuất
+    async function logout() {
+      await signOut(auth);
+    }
+
+    // Khi trạng thái đăng nhập thay đổi
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        loginBox.style.display = "none";
+        postBox.style.display = "block";
+        userEmail.textContent = user.email;
+        loadPosts();
+      } else {
+        loginBox.style.display = "block";
+        postBox.style.display = "none";
+      }
+    });
+
+    // Đăng bài
+    async function postMessage() {
+      const user = auth.currentUser;
+      if (!user) return alert("Bạn chưa đăng nhập!");
+      const text = document.getElementById("content").value;
+      if (text.trim() === "") return alert("Nội dung trống!");
+      try {
+        await addDoc(collection(db, "posts"), {
+          email: user.email,
+          content: text,
+          time: serverTimestamp()
+        });
+        document.getElementById("content").value = "";
+        alert("Đã đăng!");
+        loadPosts();
+      } catch (e) {
+        alert("Lỗi khi đăng: " + e.message);
+      }
+    }
+
+    // Hiển thị bài viết
+    async function loadPosts() {
+      const q = query(collection(db, "posts"), orderBy("time", "desc"));
+      const querySnapshot = await getDocs(q);
+      const postsDiv = document.getElementById("posts");
+      postsDiv.innerHTML = "";
+      querySnapshot.forEach((doc) => {
+        const post = doc.data();
+        const div = document.createElement("div");
+        div.className = "post";
+        div.innerHTML = <b>${post.email}</b><br>${post.content};
+        postsDiv.appendChild(div);
+      });
+    }
+
+    // Biến DOM nhanh
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginBox = document.getElementById("login-box");
+    const postBox = document.getElementById("post-box");
+    const userEmail = document.getElementById("user-email");
+  </script>
+</body>
+</html>
+Ngọc
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cứu Hộ Miền Trung</title>
+
+  <!-- Thư viện bản đồ miễn phí Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f4f4f4;
+    }
+    header {
+      background: #0077b6;
+      color: #fff;
+      text-align: center;
+      padding: 12px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #map {
+      height: 70vh;
+      width: 100%;
+    }
+    .form-container {
+      text-align: center;
+      padding: 10px;
+      background: #fff;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background: #0077b6;
+      border: none;
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005f87;
+    }
+    #status {
+      color: #222;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <header>🆘 CỨU HỘ MIỀN TRUNG</header>
+
+  <div id="map"></div>
+
+  <div class="form-container">
+    <h3>Đăng ký / Đăng nhập</h3>
+    <input type="email" id="email" placeholder="Nhập email" />
+    <input type="password" id="password" placeholder="Nhập mật khẩu" />
+    <br />
+    <button id="signup">Đăng ký</button>
+    <button id="login">Đăng nhập</button>
+    <p id="status"></p>
+  </div>
+
+  <!-- Firebase và logic xử lý -->
+  <script type="module">
+    // Import Firebase SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+    // Cấu hình Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6DNuThRLY6NsSqlhX71j5zHKhu6e-K_E",
+      authDomain: "cuuho-mientrung.firebaseapp.com",
+      projectId: "cuuho-mientrung",
+      storageBucket: "cuuho-mientrung.firebasestorage.app",
+      messagingSenderId: "54443732617",
+      appId: "1:54443732617:web:e86f1bc8aea31e64a96058"
+    };
+
+    // Khởi tạo Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // --- Hiển thị bản đồ ---
+    const map = L.map('map').setView([15.573, 108.474], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Lấy vị trí GPS
+    map.locate({ setView: true, maxZoom: 14 });
+    map.on('locationfound', function(e) {
+      L.marker(e.latlng).addTo(map).bindPopup("📍 Vị trí của bạn").openPopup();
+    });
+    map.on('locationerror', function() {
+      alert("⚠️ Không lấy được vị trí — bật GPS nhé!");
+    });
+
+    // --- Xử lý đăng ký / đăng nhập ---
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const status = document.getElementById("status");
+
+    document.getElementById("signup").addEventListener("click", async () => {
+      try {
+        await createUserWithEmailAndPassword(auth, email.value, password.value);
+        status.textContent = "✅ Đăng ký thành công!";
+      } catch (err) {
+        status.textContent = "❌ Lỗi: " + err.message;
+        console.error(err);
+      }
+    });
+
+    document.getElementById("login").addEventListener("click", async () => {
+      try {
+        await signInWithEmailAndPassword(auth, email.value, password.value);
+        status.textContent = "✅ Đăng nhập thành công!";
+      } catch (err) {
+        status.textContent = "❌ Lỗi: " + err.message;
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>
+Ngọc
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cứu Hộ Miền Trung — Cập nhật tình hình</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    :root{
+      --blue:#0b74de;--danger:#d32f2f;--orange:#f97316;--yellow:#f59e0b;--green:#16a34a;
+      --card:#fff;--muted:#5b6b72;
+    }
+    body{font-family:Arial,Helvetica,sans-serif;background:#eef6fb;margin:0;color:#06202a}
+    header{background:linear-gradient(90deg,#084b58,#0b7a8b);color:white;padding:18px;text-align:center;font-size:20px}
+    .wrap{max-width:1000px;margin:18px auto;padding:12px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+    @media (max-width:960px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card);border-radius:10px;padding:12px;box-shadow:0 6px 20px rgba(6,32,38,0.06)}
+    .small{font-size:13px;color:var(--muted)}
+    #map{height:300px;border-radius:8px;overflow:hidden;background:#dff3fa;display:flex;align-items:center;justify-content:center}
+    input,select,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #d1e9f0}
+    button{padding:10px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn-primary{background:var(--blue);color:white}
+    .btn-danger{background:var(--danger);color:white}
+    .post{border-left:6px solid #eee;padding:10px;margin-bottom:10px;border-radius:6px;background:#fbffff}
+    .badge{display:inline-block;padding:6px 8px;border-radius:6px;color:white;font-weight:600}
+    .badge.red{background:var(--danger)} .badge.orange{background:var(--orange)} .badge.yellow{background:var(--yellow)} .badge.green{background:var(--green)}
+    .admin-actions{margin-top:8px}
+    .media{max-width:100%;border-radius:6px;margin-top:8px}
+    .info-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <header>🌊 CỨU HỘ MIỀN TRUNG — Cập nhật & Cứu hộ</header>
+
+  <div class="wrap">
+    <div class="grid">
+      <!-- LEFT: main -->
+      <div>
+        <div class="card">
+          <h3>📍 Bản đồ (demo)</h3>
+          <div id="map">Bản đồ sẽ hiển thị ở đây</div>
+          <p class="small">Bản đồ dùng OpenStreetMap (Leaflet). Sau này có thể hiển thị marker các bài đăng lên map.</p>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h3>📣 Bảng tin cộng đồng (công khai)</h3>
+          <div id="postsList" class="small"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: auth + post form -->
+      <aside>
+        <div class="card">
+          <h4>🔐 Đăng ký / Đăng nhập</h4>
+          <div id="authArea">
+            <input id="email" type="email" placeholder="Email" />
+            <input id="password" type="password" placeholder="Mật khẩu (>=6 ký tự)" />
+            <div style="display:flex;gap:8px;justify-content:space-between;margin-top:6px">
+              <button class="btn-primary" id="btnRegister">Đăng ký</button>
+              <button class="btn-primary" id="btnLogin">Đăng nhập</button>
+            </div>
+            <p id="authStatus" class="small"></p>
+          </div>
+
+          <div id="userArea" style="display:none;margin-top:10px;">
+            <p class="small">Đã đăng nhập: <b id="userEmail"></b></p>
+            <button id="btnLogout" style="background:#8b5cf6;color:white">Đăng xuất</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h4>📝 Đăng thông tin (cần đăng nhập)</h4>
+          <div id="postForm" style="display:none">
+            <input id="title" placeholder="Tiêu đề (ví dụ: Cầu Tam Kỳ ngập 0.7m)" />
+            <textarea id="desc" rows="3" placeholder="Mô tả ngắn..."></textarea>
+
+            <label class="small">Chọn media (1 ảnh hoặc 1 video)</label>
+            <input id="mediaFile" type="file" accept="image/*,video/*" />
+
+            <label class="small">Mức độ lụt</label>
+            <select id="level">
+              <option value="green">Xanh (An toàn)</option>
+              <option value="yellow">Vàng (Cảnh báo)</option>
+              <option value="orange">Cam (Ngập sâu)</option>
+              <option value="red">Đỏ (Nguy cấp)</option>
+            </select>
+
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <button id="btnPost" class="btn-primary">Đăng thông tin</button>
+              <button id="btnClear" type="button">Xóa form</button>
+            </div>
+            <p id="postStatus" class="small"></p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px;">
+          <h4>📋 Ghi chú</h4>
+          <p class="small">Bài viết công khai — mọi người xem được. Admin có thể xóa bài khi cần. Media tối đa ~50MB (storage rule mặc định).</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- SCRIPTS -->
+  <script type="module">
+    // ----- Imports (Firebase v11 modules) -----
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+    import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-storage.js";
+
+    // ----- Firebase config (em đã cung cấp) -----
+    const firebaseConfig = {
+      apiKey: "AIzaSyD6DNuThRLY6NsSqlhX71j5zHKhu6e-K_E",
+      authDomain: "cuuho-mientrung.firebaseapp.com",
+      projectId: "cuuho-mientrung",
+      storageBucket: "cuuho-mientrung.firebasestorage.app",
+      messagingSenderId: "54443732617",
+      appId: "1:54443732617:web:e86f1bc8aea31e64a96058",
+      measurementId: "G-4HRL9C2WX8"
+    };
+
+    // ----- Init -----
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // ----- Admin list (Cách A) -----
+    const adminEmails = ["admin@gmail.com", "cuuhoadmin@gmail.com"]; // chỉnh email admin ở đây
+
+    // ----- DOM refs -----
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const btnRegister = document.getElementById("btnRegister");
+    const btnLogin = document.getElementById("btnLogin");
+    const authStatus = document.getElementById("authStatus");
+    const userArea = document.getElementById("userArea");
+    const userEmailEl = document.getElementById("userEmail");
+    const btnLogout = document.getElementById("btnLogout");
+
+    const postForm = document.getElementById("postForm");
+    const titleEl = document.getElementById("title");
+    const descEl = document.getElementById("desc");
+    const mediaEl = document.getElementById("mediaFile");
+    const levelEl = document.getElementById("level");
+    const btnPost = document.getElementById("btnPost");
+    const btnClear = document.getElementById("btnClear");
+    const postStatus = document.getElementById("postStatus");
+
+    const postsList = document.getElementById("postsList");
+
+    // ----- Leaflet map init -----
+    const Lmap = L.map('map').setView([15.573, 108.474], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(Lmap);
+
+    // ----- Auth actions -----
+    btnRegister.addEventListener("click", async () => {
+      authStatus.textContent = "Đang đăng ký...";
+      try {
+        await createUserWithEmailAndPassword(auth, emailEl.value, passEl.value);
+        authStatus.textContent = "✅ Đăng ký thành công!";
+      } catch (e) {
+        authStatus.textContent = "⚠️ " + e.message;
+        console.error(e);
+      }
+    });
+
+    btnLogin.addEventListener("click", async () => {
+      authStatus.textContent = "Đang đăng nhập...";
+      try {
+        await signInWithEmailAndPassword(auth, emailEl.value, passEl.value);
+        authStatus.textContent = "✅ Đăng nhập thành công!";
+      } catch (e) {
+        authStatus.textContent = "⚠️ " + e.message;
+        console.error(e);
+      }
+    });
+
+    btnLogout.addEventListener("click", async () => {
+      await signOut(auth);
+    });
+
+    // Track auth state
+    let currentUser = null;
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      if (user) {
+        userArea.style.display = "block";
+        document.getElementById("authArea").style.display = "none";
+        userEmailEl.textContent = user.email;
+        postForm.style.display = "block";
+      } else {
+        userArea.style.display = "none";
+        document.getElementById("authArea").style.display = "block";
+        userEmailEl.textContent = "";
+        postForm.style.display = "none";
+      }
+    });
+
+    // ----- Post logic -----
+    btnPost.addEventListener("click", async () => {
+      if (!currentUser) return alert("Vui lòng đăng nhập trước khi đăng bài.");
+      const title = titleEl.value.trim();
+      const desc = descEl.value.trim();
+      const level = levelEl.value;
+      const file = mediaEl.files[0];
+
+      if (!title || !desc) return alert("Vui lòng điền tiêu đề và mô tả.");
+      if (!file) return alert("Vui lòng chọn 1 ảnh hoặc 1 video.");
+
+      postStatus.textContent = "Đang tải media lên...";
+
+      // upload file lên Storage
+      try {
+        const timeNow = Date.now();
+        const ext = file.name.split(".").pop();
+        const storagePath = posts/${currentUser.uid}_${timeNow}.${ext};
+        const storageRef = sRef(storage, storagePath);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+
+        // lưu doc vào Firestore
+        await addDoc(collection(db, "posts"), {
+          uid: currentUser.uid,
+          email: currentUser.email,
+          title,
+          description: desc,
+          mediaUrl: url,
+          mediaType: file.type.startsWith("image/") ? "image" : "video",
+          floodLevel: level,
+          createdAt: serverTimestamp()
+        });
+
+        postStatus.textContent = "✅ Đăng thành công!";
+        titleEl.value = ""; descEl.value = ""; mediaEl.value = ""; levelEl.value = "green";
+      } catch (e) {
+        console.error(e);
+        postStatus.textContent = "⚠️ Lỗi: " + e.message;
+      }
+    });
+
+    btnClear.addEventListener("click", () => {
+      titleEl.value = ""; descEl.value = ""; mediaEl.value = ""; levelEl.value = "green"; postStatus.textContent = "";
+    });
+
+    // ----- Real-time load posts (public) -----
+    const postsQuery = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+    onSnapshot(postsQuery, (snapshot) => {
+      postsList.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const id = docSnap.id;
+        const div = document.createElement("div");
+        div.className = "post";
+        const timeStr = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toLocaleString() : "";
+
+        // flood level badge
+        let badgeClass = "green", badgeLabel = "Xanh";
+        if (data.floodLevel === "red") { badgeClass = "red"; badgeLabel = "Đỏ"; }
+        else if (data.floodLevel === "orange") { badgeClass = "orange"; badgeLabel = "Cam"; }
+        else if (data.floodLevel === "yellow") { badgeClass = "yellow"; badgeLabel = "Vàng"; }
+
+        // media HTML
+        let mediaHtml = "";
+        if (data.mediaUrl) {
+          if (data.mediaType && data.mediaType.startsWith("image")) {
+            mediaHtml = <img src="${data.mediaUrl}" class="media" alt="image"/>;
+          } else {
+            mediaHtml = <video src="${data.mediaUrl}" class="media" controls></video>;
+          }
+        }
+
+        div.innerHTML = `
+          <div class="info-row"><span class="badge ${badgeClass}">${badgeLabel}</span>
+            <strong style="margin-left:8px">${escapeHtml(data.title)}</strong>
+            <span style="margin-left:auto;color:#7b8b90;font-size:12px">${timeStr}</span>
+          </div>
+          <div style="margin-top:8px;color:#153e45">${escapeHtml(data.description)}</div>
+          ${mediaHtml}
+          <div class="admin-actions"></div>
+          <div style="margin-top:8px;font-size:13px;color:#6b7780">Người đăng: ${escapeHtml(data.email)}</div>
+        `;
+
+        // Admin actions
+        const adminActions = div.querySelector(".admin-actions");
+        if (currentUser && adminEmails.includes(currentUser.email)) {
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "Xóa bài";
+          delBtn.className = "btn-danger";
+          delBtn.style.marginTop = "8px";
+          delBtn.addEventListener("click", async () => {
+            if (!confirm("Xác nhận xóa bài này?")) return;
+            try {
+              await deleteDoc(doc(db, "posts", id));
+              alert("Đã xóa.");
+            } catch (e) {
+              console.error(e);
+              alert("Lỗi xóa: " + e.message);
+            }
+          });
+          adminActions.appendChild(delBtn);
+        }
+
+        postsList.appendChild(div);
+      });
+    });
+
+    // Utility to escape HTML
+    function escapeHtml(text) {
+      if (!text) return "";
+      return text.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
+    }
+
+    // (Optional) Could add markers on the map when posts arrive (left as extension)
+  </script>
+</body>
+</html>
+Ngọc
+<script type="module">
+  // ===========================
+  // 1️⃣ Import Firebase SDK
+  // ===========================
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+  import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+  import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    deleteDoc,
+    doc,
+    query,
+    orderBy
+  } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+  import {
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL
+  } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-storage.js";
+
+  // ===========================
+  // 2️⃣ Cấu hình Firebase
+  // ===========================
+  const firebaseConfig = {
+    apiKey: "AIzaSyD6DNuThRLY6NsSqlhX71j5zHKhu6e-K_E",
+    authDomain: "cuuho-mientrung.firebaseapp.com",
+    projectId: "cuuho-mientrung",
+    storageBucket: "cuuho-mientrung.firebasestorage.app",
+    messagingSenderId: "54443732617",
+    appId: "1:54443732617:web:e86f1bc8aea31e64a96058"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const storage = getStorage(app);
+
+  // ===========================
+  // 3️⃣ Bản đồ Leaflet
+  // ===========================
+  const map = L.map('map').setView([15.573, 108.474], 9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let currentPosition = null;
+  map.locate({ setView: true, maxZoom: 14 });
+  map.on('locationfound', (e) => {
+    currentPosition = e.latlng;
+    L.marker(e.latlng).addTo(map).bindPopup("📍 Vị trí của bạn").openPopup();
+  });
+
+  // ===========================
+  // 4️⃣ Tài khoản & Đăng nhập
+  // ===========================
+  const email = document.getElementById("email");
+  const password = document.getElementById("password");
+  const status = document.getElementById("status");
+
+  document.getElementById("signup").addEventListener("click", async () => {
+    try {
+      await createUserWithEmailAndPassword(auth, email.value, password.value);
+      status.textContent = "✅ Đăng ký thành công!";
+    } catch (err) {
+      status.textContent = "❌ Lỗi: " + err.message;
+    }
+  });
+
+  document.getElementById("login").addEventListener("click", async () => {
+    try {
+      await signInWithEmailAndPassword(auth, email.value, password.value);
+      status.textContent = "✅ Đăng nhập thành công!";
+    } catch (err) {
+      status.textContent = "❌ Lỗi: " + err.message;
+    }
+  });
+
+  // ===========================
+  // 5️⃣ Form đăng bài
+  // ===========================
+  const formContainer = document.querySelector(".form-container");
+  const postForm = document.createElement("div");
+  postForm.innerHTML = `
+    <h3>🗺️ Gửi thông tin lũ lụt</h3>
+    <input id="mucdo" placeholder="Mức độ lũ (nhẹ, trung bình, nặng)" /><br>
+    <input type="file" id="media" accept="image/*,video/*" /><br>
+    <button id="post">Đăng bài</button>
+    <div id="postStatus"></div>
+    <div id="posts"></div>
+  `;
+  formContainer.appendChild(postForm);
+
+  const postStatus = document.getElementById("postStatus");
+  const postsDiv = document.getElementById("posts");
+
+  // ===========================
+  // 6️⃣ Đăng bài
+  // ===========================
+  document.getElementById("post").addEventListener("click", async () => {
+    const user = auth.currentUser;
+    const file = document.getElementById("media").files[0];
+    const mucdo = document.getElementById("mucdo").value.trim();
+
+    if (!user) {
+      postStatus.textContent = "❌ Cần đăng nhập để đăng bài.";
+      return;
+    }
+    if (!file) {
+      postStatus.textContent = "❌ Vui lòng chọn hình ảnh hoặc video.";
+      return;
+    }
+    if (!currentPosition) {
+      postStatus.textContent = "⚠️ Chưa lấy được vị trí.";
+      return;
+    }
+
+    try {
+      const fileRef = ref(storage, media/${Date.now()}_${file.name});
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+
+      await addDoc(collection(db, "posts"), {
+        user: user.email,
+        mucdo,
+        url,
+        type: file.type.startsWith("video") ? "video" : "image",
+        lat: currentPosition.lat,
+        lng: currentPosition.lng,
+        created: new Date()
+      });
+
+      postStatus.textContent = "✅ Đăng bài thành công!";
+      document.getElementById("mucdo").value = "";
+      document.getElementById("media").value = "";
+      loadPosts();
+    } catch (err) {
+      postStatus.textContent = "❌ Lỗi: " + err.message;
+    }
+  });
+
+  // ===========================
+  // 7️⃣ Hiển thị bài viết
+  // ===========================
+  async function loadPosts() {
+    postsDiv.innerHTML = "";
+    const q = query(collection(db, "posts"), orderBy("created", "desc"));
+    const snap = await getDocs(q);
+    snap.forEach((docSnap) => {
+      const data = docSnap.data();
+      const div = document.createElement("div");
+      div.style.border = "1px solid #ccc";
+      div.style.margin = "8px";
+      div.style.padding = "8px";
+      div.style.borderRadius = "8px";
+      div.style.background = "#fff";
+
+      let mediaHtml = "";
+      if (data.type === "image")
+        mediaHtml = <img src="${data.url}" style="width:100%;border-radius:6px">;
+      else
+        mediaHtml = <video controls style="width:100%;border-radius:6px"><source src="${data.url}"></video>;
+
+      const isAdmin = auth.currentUser?.email === "admin@gmail.com";
+
+      div.innerHTML = `
+        <b>${data.user}</b><br>
+        <b>🌊 Mức độ:</b> ${data.mucdo}<br>
+        ${mediaHtml}
+        ${isAdmin ? <button class="delete" data-id="${docSnap.id}">🗑️ Xóa</button> : ""}
+      `;
+
+      postsDiv.appendChild(div);
+
+      L.marker([data.lat, data.lng])
+        .addTo(map)
+        .bindPopup(<b>${data.user}</b><br>${data.mucdo});
+    });
+
+    // Xử lý nút xóa (chỉ admin)
+    document.querySelectorAll(".delete").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (confirm("Xóa bài này?")) {
+          await deleteDoc(doc(db, "posts", btn.dataset.id));
+          loadPosts();
+        }
+      });
+    });
+  }
+
+  // ===========================
+  // 8️⃣ Theo dõi trạng thái đăng nhập
+  // ===========================
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      status.textContent =👋 Xin chào, ${user.email}`;
+      loadPosts();
+    } else {
+      status.textContent = "🔒 Chưa đăng nhập";
+      postsDiv.innerHTML = "";
+    }
+  });
+</script>
+</body>
+</html>
